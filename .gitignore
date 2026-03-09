@@ -1,0 +1,6 @@
+/target
+results/
+*.csv
+*.json
+.DS_Store
+meg-scan

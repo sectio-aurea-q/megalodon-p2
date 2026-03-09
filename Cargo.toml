@@ -1,0 +1,14 @@
+[package]
+name = "megalodon-p2"
+version = "0.1.0"
+edition = "2021"
+description = "Process Memory Secret Scanner for Apple Silicon — MEGALODON P2"
+authors = ["sectio-aurea-q <meg.depth@proton.me>"]
+license = "MIT"
+
+[dependencies]
+libc = "0.2"
+
+[[bin]]
+name = "meg-scan"
+path = "src/main.rs"
