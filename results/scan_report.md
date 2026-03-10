@@ -1,15 +1,15 @@
 # MEGALODON P2 — Process Memory Secret Scan Report
 
 **Platform:** macOS Apple Silicon
-**Date:** 2026-03-10 14:06:56
+**Date:** 2026-03-10 14:22:50
 
 ## Summary
 
 | Application | PID | Regions | Bytes Scanned | Secrets | Duration |
 |---|---|---|---|---|---|
-| /System/Applications/Messages.app/Contents/Extensions/MessagesActionExtension.appex/Contents/MacOS/MessagesActionExtension | 1158 | 23 | 264.4 MB | 0 | 3792ms |
+| /System/Library/PrivateFrameworks/MapsSync.framework/mapssyncd | 1629 | 34 | 227.5 MB | 0 | 3229ms |
 
-## /System/Applications/Messages.app/Contents/Extensions/MessagesActionExtension.appex/Contents/MacOS/MessagesActionExtension (PID 1158)
+## /System/Library/PrivateFrameworks/MapsSync.framework/mapssyncd (PID 1629)
 
 No secrets found in process memory.
 
