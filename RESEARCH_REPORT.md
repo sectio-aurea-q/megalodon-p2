@@ -9,7 +9,7 @@
 
 ## Abstract
 
-MEGALODON P2 is a novel process memory scanner for macOS on Apple Silicon (M1–M4) that detects unzeroized cryptographic secrets in running applications. We scanned four security-relevant targets — Google Chrome, Tor Browser, Signal Desktop, and Apple's securityd — and found that three of four applications leave private keys, authentication credentials, and encryption keys in plaintext process memory. Signal Desktop exposed 32 secrets including 22 per-contact profile encryption keys. Chrome exposed 5 distinct private keys across RSA, EC, and OpenSSH formats. Only Apple's securityd daemon properly zeroizes its memory, demonstrating that constant-time memory hygiene is achievable but not practiced by major consumer applications.
+MEGALODON P2 is a novel process memory scanner for macOS on Apple Silicon (M1–M4) that detects unzeroized cryptographic secrets in running applications. We scanned five security-relevant targets — Google Chrome, Tor Browser, Signal Desktop, Telegram, and Apple's securityd — and found that four of five applications leave private keys, authentication credentials, and encryption keys in plaintext process memory. Signal Desktop exposed 32 secrets including 22 per-contact profile encryption keys. Chrome exposed 5 distinct private keys across RSA, EC, and OpenSSH formats. Only Apple's securityd daemon properly zeroizes its memory, demonstrating that constant-time memory hygiene is achievable but not practiced by major consumer applications.
 
 No existing tool performs systematic process memory scanning of secure applications on Apple Silicon. Volatility does not support ARM64 Macs. osxpmem is Intel-only (archived 2017). All prior Signal forensics research targets disk-based artifacts on Windows. MEGALODON P2 fills this gap.
 
@@ -50,6 +50,7 @@ MEGALODON P2 is written in Rust and operates via Mach kernel APIs:
 | Google Chrome | 145.0.7632.160 | Browser | 605 |
 | Tor Browser (Firefox) | Current | Privacy browser | 640 |
 | Signal Desktop | Current | Encrypted messenger | 1789 |
+| Telegram | Current | Messenger | 2831 |
 | securityd | System | macOS security daemon | 364 |
 | endpointsecurityd | System | Endpoint security | 331 |
 
@@ -66,6 +67,7 @@ MEGALODON P2 is written in Rust and operates via Mach kernel APIs:
 | Google Chrome | 6 | 5 | 1 | 1,016.3 MB | 15.3s |
 | Tor Browser | 1 | 1 | 0 | 643.8 MB | 9.4s |
 | Signal Desktop | 32 | 1 | 31 | 1,200.0 MB | 30.5s |
+| Telegram | 1 | 1 | 0 | 642.6 MB | 12.8s |
 | securityd | 0 | 0 | 0 | 187.0 MB | 2.6s |
 | endpointsecurityd | 0 | 0 | 0 | 187.0 MB | 2.6s |
 
@@ -92,7 +94,15 @@ The presence of multiple key types (RSA, EC, OpenSSH, generic) suggests Chrome l
 
 Tor Browser exposes one RSA private key — likely the Tor circuit relay key or an onion service key. While Tor's threat model assumes the local machine is trusted, this finding is relevant for journalists and whistleblowers whose devices may be seized.
 
-### 4.4 Signal Desktop — 32 Findings
+### 4.4 Telegram — 1 Finding
+
+| # | Severity | Finding | Size |
+|---|---|---|---|
+| 1 | CRITICAL | RSA Private Key (PEM) | 31 bytes |
+
+Telegram Desktop (native macOS app, not Electron-based) exposes one RSA private key in process memory. Telegram uses a custom MTProto protocol with RSA for server authentication. The retained key likely relates to the initial server key exchange. Despite Telegram's native implementation (as opposed to Electron-based apps like Signal), the same zeroization failure is present.
+
+### 4.5 Signal Desktop — 32 Findings
 
 | Finding Type | Count | Severity |
 |---|---|---|
@@ -107,7 +117,7 @@ The 7 password fields contain Signal server authentication credentials in JSON f
 
 The SQLCipher database encryption key was not found via the `"key":"` prefix pattern, suggesting Signal's newer versions may use Electron's safeStorage API or a different key delivery mechanism. This requires further investigation.
 
-### 4.5 Apple securityd — Clean
+### 4.6 Apple securityd — Clean
 
 Both `securityd` (PID 364) and `endpointsecurityd` (PID 331) showed zero findings across 187 MB of scanned memory each. This serves as a critical control result: Apple's own security daemon properly zeroizes cryptographic material, proving that memory hygiene is technically feasible and that MEGALODON's pattern engine does not produce false positives on clean processes.
 
@@ -156,6 +166,7 @@ We intend to disclose findings to affected vendors:
 | Google (Chrome) | Chrome VRP | 90-day disclosure |
 | Signal | security@signal.org | 90-day disclosure |
 | Tor Project | security@torproject.org | 90-day disclosure |
+| Telegram | security@telegram.org | 90-day disclosure |
 
 Findings will be reported with full reproduction steps and suggested mitigations (explicit memory zeroization, use of mlock/munlock, Secure Enclave integration).
 
@@ -182,7 +193,7 @@ Findings will be reported with full reproduction steps and suggested mitigations
 
 ## 8. Conclusion
 
-MEGALODON P2 demonstrates that major "secure" applications on Apple Silicon — including Signal Desktop, the gold standard for encrypted messaging — leave cryptographic secrets in plaintext process memory. Apple's own securityd shows that proper memory hygiene is achievable. The gap between Apple's implementation and third-party applications represents a systemic vulnerability that affects millions of users who trust these applications with their most sensitive communications.
+MEGALODON P2 demonstrates that major "secure" applications on Apple Silicon — including Signal Desktop, the gold standard for encrypted messaging, as well as Chrome, Tor Browser, and Telegram — leave cryptographic secrets in plaintext process memory. Apple's own securityd shows that proper memory hygiene is achievable. The gap between Apple's implementation and third-party applications represents a systemic vulnerability that affects millions of users who trust these applications with their most sensitive communications.
 
 ---
 
