@@ -179,6 +179,7 @@ fn search_pattern(data: &[u8], pattern: &SecretPattern, base_addr: u64) -> Vec<S
                 let valid_len = match data_charset {
                     DataCharset::Hex => count_hex_chars(candidate),
                     DataCharset::Base64 => count_base64_chars(candidate),
+                    DataCharset::UpperAlphaNum => count_upper_alphanum_chars(candidate),
                     DataCharset::Any => candidate.len(),
                 };
 
@@ -355,6 +356,12 @@ fn count_hex_chars(data: &[u8]) -> usize {
 fn count_base64_chars(data: &[u8]) -> usize {
     data.iter()
         .take_while(|&&b| b.is_ascii_alphanumeric() || b == b'+' || b == b'/' || b == b'=')
+        .count()
+}
+
+fn count_upper_alphanum_chars(data: &[u8]) -> usize {
+    data.iter()
+        .take_while(|&&b| b.is_ascii_uppercase() || b.is_ascii_digit())
         .count()
 }
 

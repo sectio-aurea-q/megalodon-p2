@@ -39,6 +39,7 @@ pub enum PatternType {
 pub enum DataCharset {
     Hex,
     Base64,
+    UpperAlphaNum,
     Any,
 }
 
@@ -171,15 +172,16 @@ fn get_generic_patterns() -> Vec<SecretPattern> {
                 max_len: 2048,
             },
         },
-        // AWS keys
+        // AWS keys — strict: AKIA + exactly 16 uppercase alphanumeric chars
         SecretPattern {
             name: "AWS Access Key",
             description: "AWS access key ID",
             severity: Severity::High,
-            pattern_type: PatternType::AsciiShape {
-                prefix: "AKIA",
-                min_len: 20,
-                max_len: 20,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"AKIA",
+                min_data_len: 16,
+                max_data_len: 16,
+                data_charset: DataCharset::UpperAlphaNum,
             },
         },
         // GitHub tokens
@@ -221,7 +223,7 @@ fn get_generic_patterns() -> Vec<SecretPattern> {
 /// Signal Desktop specific patterns
 fn get_signal_patterns() -> Vec<SecretPattern> {
     vec![
-        // SQLCipher key (64 hex chars)
+        // SQLCipher key (64 hex chars) — older versions via config.json
         SecretPattern {
             name: "Signal SQLCipher Key",
             description: "Signal Desktop database encryption key in memory",
@@ -233,6 +235,42 @@ fn get_signal_patterns() -> Vec<SecretPattern> {
                 data_charset: DataCharset::Hex,
             },
         },
+        // SQLCipher key variant — sqlKey field
+        SecretPattern {
+            name: "Signal SQL Key",
+            description: "Signal Desktop SQL encryption key",
+            severity: Severity::Critical,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"\"sqlKey\":\"",
+                min_data_len: 64,
+                max_data_len: 64,
+                data_charset: DataCharset::Hex,
+            },
+        },
+        // Encrypted key from safeStorage (newer versions)
+        SecretPattern {
+            name: "Signal Encrypted Key",
+            description: "Signal safeStorage encrypted key material",
+            severity: Severity::Critical,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"\"encryptedKey\":\"",
+                min_data_len: 32,
+                max_data_len: 512,
+                data_charset: DataCharset::Base64,
+            },
+        },
+        // Signal storage key
+        SecretPattern {
+            name: "Signal Storage Key",
+            description: "Signal storage service key",
+            severity: Severity::Critical,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"\"storageKey\":\"",
+                min_data_len: 32,
+                max_data_len: 128,
+                data_charset: DataCharset::Base64,
+            },
+        },
         // Signal identity key
         SecretPattern {
             name: "Signal Identity Key",
@@ -242,6 +280,18 @@ fn get_signal_patterns() -> Vec<SecretPattern> {
                 prefix: b"identityKey",
                 min_data_len: 32,
                 max_data_len: 128,
+                data_charset: DataCharset::Base64,
+            },
+        },
+        // Signal profile key
+        SecretPattern {
+            name: "Signal Profile Key",
+            description: "Signal profile encryption key",
+            severity: Severity::High,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"\"profileKey\":\"",
+                min_data_len: 32,
+                max_data_len: 64,
                 data_charset: DataCharset::Base64,
             },
         },
