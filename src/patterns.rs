@@ -295,6 +295,42 @@ fn get_signal_patterns() -> Vec<SecretPattern> {
                 data_charset: DataCharset::Base64,
             },
         },
+        // SQLCipher PRAGMA key statement
+        SecretPattern {
+            name: "Signal SQLCipher PRAGMA",
+            description: "SQLCipher PRAGMA key statement in memory",
+            severity: Severity::Critical,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"PRAGMA key",
+                min_data_len: 10,
+                max_data_len: 128,
+                data_charset: DataCharset::Any,
+            },
+        },
+        // SQLCipher hex key format x'...'
+        SecretPattern {
+            name: "Signal SQLCipher Hex Key",
+            description: "SQLCipher hex key format in memory",
+            severity: Severity::Critical,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"x\'",
+                min_data_len: 64,
+                max_data_len: 64,
+                data_charset: DataCharset::Hex,
+            },
+        },
+        // Decrypted key from safeStorage
+        SecretPattern {
+            name: "Signal Decrypted DB Key",
+            description: "Decrypted Signal database key from safeStorage",
+            severity: Severity::Critical,
+            pattern_type: PatternType::PrefixThenData {
+                prefix: b"sqlKey",
+                min_data_len: 32,
+                max_data_len: 128,
+                data_charset: DataCharset::Any,
+            },
+        },
         // Plaintext messages
         SecretPattern {
             name: "Signal Message Body",
